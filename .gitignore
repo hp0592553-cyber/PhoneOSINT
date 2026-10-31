@@ -12,3 +12,4 @@ venv/
 *.zip
 *.CSV
 *.csv
+*.webhook.json
