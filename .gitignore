@@ -3,5 +3,12 @@ __pycache__/
 .venv/
 venv/
 .env
-*.evidence.json
 .env.*
+*.evidence.json
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.zip
+*.CSV
+*.csv
