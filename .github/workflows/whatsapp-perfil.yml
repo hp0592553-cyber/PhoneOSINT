@@ -1,23 +1,26 @@
-name: PhoneOSINT - Consultar numero WhatsApp
+name: PhoneOSINT - Consultar meu numero
 
-# Executar manualmente: Actions > este workflow > Run workflow
-# O numero digitado e um input do GitHub Actions, NAO um segredo.
-# Para privacidade maior, usar o segredo PHONE_NUMBER em outro workflow.
-run-name: Consulta manual de numero
+# Este e o UNICO workflow de pesquisa de WhatsApp usado neste teste.
+# O input do Run workflow nao e secreto. Use o segredo PHONE_NUMBER se precisar.
+run-name: Pesquisa autorizada de numero
 
 on:
   workflow_dispatch:
     inputs:
       numero:
-        description: 'Seu telefone brasileiro com DDD (ex.: +55 31 9XXXX XXXX)'
-        required: true
+        description: 'Seu numero com DDD (input nao secreto, ex. +55 31 9XXXXXXXX)'
+        required: false
         type: string
-  push:
-    paths:
-      - 'whatsapp_profile.py'
-      - 'phoneosint.py'
-      - 'tests/test_whatsapp_profile.py'
-      - '.github/workflows/whatsapp-perfil.yml'
+      confirmo_numero_meu:
+        description: 'Confirmo que este numero e meu ou tenho autorizacao'
+        required: true
+        type: boolean
+        default: false
+      pesquisar_web:
+        description: 'Consultar mencoes publicas no Brave (envia numero e pode gerar custos)'
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -25,52 +28,107 @@ permissions:
 jobs:
   consultar:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 6
     steps:
-      - name: Baixar codigo
+      - name: Baixar projeto
         uses: actions/checkout@v4
-      - name: Instalar Python
+      - name: Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Instalar dependencias
         run: python -m pip install -r requirements.txt
-      - name: Testar leitor de webhook
+      - name: Rodar testes do leitor WhatsApp
         run: python -m unittest discover -s tests -p 'test_whatsapp_profile.py' -v
-      - name: Validar numero informado e mostrar resultado
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+      - name: Validar meu numero e opcionalmente pesquisar fontes publicas
         env:
-          PHONE_NUMBER_INPUT: ${{ inputs.numero }}
+          PHONE_INPUT: ${{ inputs.numero }}
+          PHONE_SECRET: ${{ secrets.PHONE_NUMBER }}
+          AUTHORIZED: ${{ inputs.confirmo_numero_meu }}
+          SEARCH_WEB: ${{ inputs.pesquisar_web }}
+          BRAVE_KEY: ${{ secrets.BRAVE_SEARCH_API_KEY }}
         shell: bash
         run: |
           python - <<'PY'
+          import html
+          import json
           import os
+          import re
           import sys
+          from urllib.parse import urlencode, urlsplit
+          from urllib.request import Request, urlopen
+          from urllib.error import HTTPError, URLError
+          import phonenumbers
+          from phonenumbers import PhoneNumberFormat
           from phoneosint import normalize_number
 
-          raw = os.environ.get("PHONE_NUMBER_INPUT", "")
+          def stop(message):
+              print(message)
+              raise SystemExit(1)
+
+          if os.getenv("AUTHORIZED", "").lower() != "true":
+              stop("Marque a caixa de autorizacao antes de executar.")
+          raw = os.getenv("PHONE_SECRET") or os.getenv("PHONE_INPUT", "")
           try:
               info = normalize_number(raw)
           except ValueError:
-              print("Erro: telefone brasileiro invalido. Inclua DDD.")
-              sys.exit(1)
+              stop("Numero invalido ou ausente. Use o campo ou o segredo PHONE_NUMBER.")
 
-          # Não inclui o telefone no log ou relatório.
-          result = [
-              "### Resultado da consulta",
-              "",
-              "- Numero brasileiro: valido",
-              f"- Tipo de linha: {info['type']}",
-              f"- Regiao telefonica: {info['region']}",
-              "- Nome do perfil do WhatsApp: **nao disponivel por consulta de numero**",
-              "- Titular cadastral: **nao identificado**",
-              "",
-              "A API oficial do WhatsApp nao permite consultar o nome de perfil",
-              "de qualquer numero sem uma interacao autorizada com a conta.",
-              "Nenhuma mensagem foi enviada e nenhum dado do WhatsApp foi acessado.",
+          lines = [
+              "## Resultado - consulta do proprio numero", "",
+              "- Numero: **brasileiro valido** (omitido por privacidade)",
+              f"- Tipo: {html.escape(info['type'])}",
+              f"- Regiao: {html.escape(info['region'])}",
+              "- Nome do WhatsApp: **nao disponivel por consulta direta**",
+              "- Titular na operadora: **nao verificado**", "",
           ]
-          report = "\n".join(result) + "\n"
+
+          if os.getenv("SEARCH_WEB", "").lower() == "true":
+              key = os.getenv("BRAVE_KEY", "")
+              if not key:
+                  lines += ["### Busca publica nao executada", "",
+                            "Configure o segredo BRAVE_SEARCH_API_KEY em Settings > Secrets and variables > Actions.", ""]
+              else:
+                  parsed = phonenumbers.parse(info["number"], None)
+                  national = phonenumbers.format_number(parsed, PhoneNumberFormat.NATIONAL)
+                  query = '"' + national + '" OR "' + info["number"] + '"'
+                  params = urlencode({"q": query, "country": "BR", "search_lang": "pt", "count": "5"})
+                  request = Request(
+                      "https://api.search.brave.com/res/v1/web/search?" + params,
+                      headers={"Accept": "application/json", "X-Subscription-Token": key},
+                  )
+                  try:
+                      with urlopen(request, timeout=18) as response:
+                          body = response.read(500_000)
+                      results = json.loads(body).get("web", {}).get("results", [])[:5]
+                      lines += ["### Paginas possivelmente relacionadas ao numero", ""]
+                      if not results:
+                          lines.append("Nenhuma pagina encontrada nesta busca especifica.")
+                      local = re.sub(r"\D", "", info["number"])[2:]
+                      pattern = r"(?<!\d)" + r"\D{0,4}".join(map(re.escape, local)) + r"(?!\d)"
+                      for item in results:
+                          title = str(item.get("title") or "Pagina sem titulo")
+                          parts = urlsplit(str(item.get("url") or ""))
+                          if parts.scheme != "https" or not parts.hostname:
+                              continue
+                          title = re.sub(pattern, "[numero oculto]", title)
+                          title = html.escape(re.sub(r"\s+", " ", title)[:140], quote=False)
+                          site = html.escape(parts.hostname, quote=False)
+                          # Nao imprime endereco da pagina com telefone pessoal.
+                          lines.append(f"- {title} (fonte: https://{site}/)")
+                      lines += ["",
+                          "**Resultado de buscador, nao prova identidade, nome do WhatsApp ou titularidade.**",
+                          "Confira manualmente a fonte e a data. Links acima apontam apenas ao dominio.",
+                          ""]
+                  except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError):
+                      lines += ["### Busca publica nao concluida", "",
+                          "Erro de API. Confira chave Brave, plano, credito e limites.", ""]
+          else:
+              lines += ["Busca publica desativada. Nenhum telefone foi enviado a mecanismo de pesquisa.", ""]
+
+          lines += ["Nenhuma mensagem enviada e nenhum acesso ao WhatsApp pessoal."]
+          report = "\n".join(lines) + "\n"
           print(report)
-          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
-              f.write(report)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as output:
+              output.write(report)
           PY
