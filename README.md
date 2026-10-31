@@ -1,5 +1,22 @@
 # PhoneOSINT 🇧🇷
 
+## Projeto focado em nome associado (branch Codex)
+
+**Branch de trabalho:** `codex/issue-1-associated-names`  
+**Único workflow:** [PhoneOSINT — Nome por número](.github/workflows/whatsapp-perfil.yml)
+
+Para executar: **Actions > PhoneOSINT - Nome por numero > Run workflow > Use workflow from: codex/issue-1-associated-names**. Digite somente seu próprio número ou use o segredo `PHONE_NUMBER`, confirme a autorização e abra a aba **Summary**.
+
+O resultado indica se o número é válido e aponta consultas manuais de nome nestas páginas oficiais:
+- [Truecaller — pesquisa reversa de telefone](https://www.truecaller.com/reverse-phone-number-lookup)
+- [Sync.ME — busca reversa de número](https://sync.me/pt-br/reverse-phone-lookup/)
+
+Esses dois serviços podem retornar **nomes associados** quando disponíveis, mas **não são prova de titularidade** e não garantem a identidade atual. O workflow não possui acesso programático aos dados internos deles, não faz scraping e não executa automaticamente a pesquisa. **Sem uma fonte autorizada disponível para integração, não é tecnicamente possível prometer descobrir o nome de qualquer pessoa pelo número, gratuitamente, sem chave e sem interação.**
+
+O recurso **local** `associated_names.py` permite guardar, com origem e data, um resultado obtido manualmente e autorizado. Esse resultado **não é descoberto pela ferramenta**. Não envie arquivos de evidências pessoais ao GitHub.
+
+
+
 **WhatsApp (nome de perfil em mensagens recebidas):** [guia de configuração e limitações](WHATSAPP.md). Esta integração não busca usuários pelo número.
 
 📚 [Fontes oficiais, limites legais e MP 1.396/2026](FONTES_E_LEGALIDADE.md)
