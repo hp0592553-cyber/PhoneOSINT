@@ -1,10 +1,21 @@
-name: PhoneOSINT - WhatsApp perfil (testes)
+name: PhoneOSINT - Consultar numero WhatsApp
+
+# Executar manualmente: Actions > este workflow > Run workflow
+# O numero digitado e um input do GitHub Actions, NAO um segredo.
+# Para privacidade maior, usar o segredo PHONE_NUMBER em outro workflow.
+run-name: Consulta manual de numero
 
 on:
   workflow_dispatch:
+    inputs:
+      numero:
+        description: 'Seu telefone brasileiro com DDD (ex.: +55 31 9XXXX XXXX)'
+        required: true
+        type: string
   push:
     paths:
       - 'whatsapp_profile.py'
+      - 'phoneosint.py'
       - 'tests/test_whatsapp_profile.py'
       - '.github/workflows/whatsapp-perfil.yml'
 
@@ -12,20 +23,54 @@ permissions:
   contents: read
 
 jobs:
-  validar:
+  consultar:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout
+      - name: Baixar codigo
         uses: actions/checkout@v4
-      - name: Python
+      - name: Instalar Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Testar parser e assinatura de webhook
+      - name: Instalar dependencias
+        run: python -m pip install -r requirements.txt
+      - name: Testar leitor de webhook
         run: python -m unittest discover -s tests -p 'test_whatsapp_profile.py' -v
-      - name: Confirmar exemplo ficticio sem publicar dados
+      - name: Validar numero informado e mostrar resultado
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          PHONE_NUMBER_INPUT: ${{ inputs.numero }}
         shell: bash
         run: |
-          python whatsapp_profile.py --demo > /dev/null
-          echo "Parser de perfil validado com dados ficticios."
+          python - <<'PY'
+          import os
+          import sys
+          from phoneosint import normalize_number
+
+          raw = os.environ.get("PHONE_NUMBER_INPUT", "")
+          try:
+              info = normalize_number(raw)
+          except ValueError:
+              print("Erro: telefone brasileiro invalido. Inclua DDD.")
+              sys.exit(1)
+
+          # Não inclui o telefone no log ou relatório.
+          result = [
+              "### Resultado da consulta",
+              "",
+              "- Numero brasileiro: valido",
+              f"- Tipo de linha: {info['type']}",
+              f"- Regiao telefonica: {info['region']}",
+              "- Nome do perfil do WhatsApp: **nao disponivel por consulta de numero**",
+              "- Titular cadastral: **nao identificado**",
+              "",
+              "A API oficial do WhatsApp nao permite consultar o nome de perfil",
+              "de qualquer numero sem uma interacao autorizada com a conta.",
+              "Nenhuma mensagem foi enviada e nenhum dado do WhatsApp foi acessado.",
+          ]
+          report = "\n".join(result) + "\n"
+          print(report)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write(report)
+          PY
