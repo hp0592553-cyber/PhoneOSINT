@@ -68,7 +68,7 @@ jobs:
 
           if os.getenv("AUTHORIZED", "").lower() != "true":
               stop("Marque a caixa de autorizacao antes de executar.")
-          raw = os.getenv("PHONE_SECRET") or os.getenv("PHONE_INPUT", "")
+          raw = os.getenv("PHONE_INPUT") or os.getenv("PHONE_SECRET", "")
           try:
               info = normalize_number(raw)
           except ValueError:
@@ -112,6 +112,7 @@ jobs:
                           if parts.scheme != "https" or not parts.hostname:
                               continue
                           title = re.sub(pattern, "[numero oculto]", title)
+                          title = re.sub(r"(?:\+?55[\s().-]*)?\(?\d{2}\)?[\s().-]*9?\d{4}[\s().-]*\d{4}", "[telefone oculto]", title)
                           title = html.escape(re.sub(r"\s+", " ", title)[:140], quote=False)
                           site = html.escape(parts.hostname, quote=False)
                           # Nao imprime endereco da pagina com telefone pessoal.
