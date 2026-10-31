@@ -16,12 +16,31 @@ on:
         required: true
         type: boolean
         default: false
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/whatsapp-perfil.yml'
 
 permissions:
   contents: read
 
 jobs:
+  limpar-branch-antiga:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: write
+    steps:
+      - name: Excluir branch do Codex apos merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh api --method DELETE "repos/$GH_REPO/git/refs/heads/codex/issue-1-associated-names"
+          echo 'Branch secundaria excluida; somente main deve permanecer.'
   nome-por-numero:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
