@@ -1,34 +1,61 @@
 # PhoneOSINT 🇧🇷
 
-Protótipo Python para investigação **legal, transparente e verificável** de números brasileiros.
+Projeto Python de investigação **legal e local** de números brasileiros. Busca possíveis vínculos com **empresas** informados em bases oficiais, sem atribuir identidade a pessoas físicas.
 
-## O que faz
+## Funcionalidades
 
-- Valida números do Brasil e normaliza para E.164.
-- Informa região telefônica e tipo de linha, quando disponível.
-- Permite associar **nome empresarial** a um número somente a partir de uma evidência local documentada, sem verificação automática da fonte.
-- Retorna **Titular não identificado** quando não houver evidência.
-- Mostra o caminho oficial para consulta de números empresariais.
+- Validação e normalização E.164 de números brasileiros.
+- **Novo:** importador offline de arquivos públicos do CNPJ da Receita Federal (Empresas + Estabelecimentos) para SQLite.
+- Busca exata de empresas que tenham declarado um número de telefone; retorna razão social, CNPJ da empresa e data da extração.
+- Importa apenas naturezas jurídicas 2046, 2054 e 2062 (sociedades anônimas e limitadas) e estabelecimentos ativos.
+- Exclui empresários individuais/MEI, não acessa cadastros pessoais nem faz raspagem de sites.
+- Múltiplas empresas vinculadas ao mesmo número são apresentadas como ambiguidade.
+- Sem dados encontrados: **Titular não identificado**. Isso também pode indicar apenas base incompleta.
 
-**Limitação:** não existe consulta pública universal ao nome do titular de qualquer celular pessoal. Nome empresarial, nome em aplicativo e titular cadastral não são equivalentes.
+**Atenção:** telefone declarado no CNPJ NÃO comprova quem é o titular atual do chip, nem quem usa o WhatsApp. Cadastros podem ser antigos, incorretos ou conter números reutilizados.
 
-## Codespaces
+## Executar no Codespaces
 
-Abra o repositório em **Code > Codespaces > Create codespace** e rode:
+Abra Code > Codespaces > Create codespace no GitHub e rode:
 
-```bash
+~~~bash
 python -m pip install -r requirements.txt
 python -m unittest discover -s tests -v
 python phoneosint.py "+55 31 90000-0000"
-```
+~~~
 
-O último comando usa um número ilustrativo. O programa não envia esse número para nenhum servidor.
+O exemplo é fictício. Sem base de CNPJ ou evidência pública previamente carregada, nenhum nome é encontrado.
 
-### Evidência empresarial local (opcional)
+## Importar Dados Abertos da Receita Federal
 
-Após consultar legitimamente uma fonte, crie no seu ambiente um arquivo `consulta.evidence.json` — **não comite números privados**:
+Fontes oficiais:
 
-```json
+- [Dados Abertos do CNPJ](https://dadosabertos.rfb.gov.br/CNPJ/)
+- [Leiaute oficial: campos da empresa e dos telefones](https://www.gov.br/receitafederal/dados/cnpj-metadados.pdf)
+- [Portal empresarial recomendado pela Anatel](https://www.qualempresameligou.com.br/)
+- [LGPD, orientações da ANPD](https://www.gov.br/anpd/pt-br/acesso-a-informacao/perguntas-frequentes)
+
+Baixe legitimamente os arquivos **Empresas*.zip** e **Estabelecimentos*.zip** de uma mesma extração mensal. Cada comando aceita **um par de arquivos**; se a extração for dividida em vários volumes, um único par produz um índice **incompleto**, não nacional. Os arquivos podem ser muito grandes; verifique espaço e custos do Codespaces. Não há download automático ou API oculta.
+
+Importe, substituindo a data do exemplo pela data real de referência dos arquivos:
+
+~~~bash
+python cnpj_base.py --empresas Empresas0.zip --estabelecimentos Estabelecimentos0.zip --snapshot 2026-10-01 --db phoneosint_cnpj.sqlite
+~~~
+
+A data é fornecida manualmente e os arquivos não são autenticados automaticamente. Consulte o banco gerado:
+
+~~~bash
+python phoneosint.py "+55 31 90000-0000" --cnpj-db phoneosint_cnpj.sqlite
+~~~
+
+Os resultados são **associações empresariais históricas**, não titularidade da linha. Para consultar a titularidade de linhas empresariais abrangidas pela Anatel, utilize o portal Qual Empresa Me Ligou diretamente no navegador.
+
+### Evidência empresarial informada manualmente (opcional)
+
+Também é possível passar um arquivo JSON local do tipo:
+
+~~~json
 [
   {
     "number": "+5531900000000",
@@ -38,24 +65,16 @@ Após consultar legitimamente uma fonte, crie no seu ambiente um arquivo `consul
     "checked_on": "2026-10-31"
   }
 ]
-```
+~~~
 
-Dados acima são **fictícios** e não comprovam nenhum titular real. O endereço precisa ser conferido com o resultado efetivamente encontrado na fonte. Rode:
+**Os valores acima são inventados**, não são uma consulta real. Salve como consulta.evidence.json e use:
 
-```bash
+~~~bash
 python phoneosint.py "+55 31 90000-0000" --evidence consulta.evidence.json
-```
+~~~
 
-Isso exibe **nome empresarial informado por evidência (não verificado automaticamente)**. Somente comparar números completos e comprovar data e origem; a aplicação não acessa o portal automaticamente.
+O projeto **não verifica automaticamente** esses dados.
 
-## Fontes
+## Privacidade e segurança
 
-- [Qual Empresa Me Ligou](https://www.qualempresameligou.com.br/) — identifica linhas atribuídas a empresas (razão social/CNPJ), quando abrangidas pelo serviço.
-- [Anatel: chamadas abusivas](https://www.gov.br/anatel/pt-br/consumidor/chamadas-abusivas).
-- [ANPD: bases legais de tratamento de dados](https://www.gov.br/anpd/pt-br/acesso-a-informacao/perguntas-frequentes).
-
-## Privacidade
-
-Sem bots de vazamentos, scraping não autorizado, buscas por CPF, enumeração em massa ou uso de sessões do WhatsApp. Nunca publique números particulares, dados pessoais, tokens ou arquivos de consulta em GitHub. O `.gitignore` exclui `*.evidence.json`, mas outros nomes de arquivo ainda podem ser publicados.
-
-Próximo passo: estudar uma integração permitida e documentada com fonte pública de **pessoas jurídicas**, antes de automatizar qualquer consulta.
+NÃO publicar números particulares, tokens, CPF, evidências ou bancos SQLite no GitHub. A LGPD pode incidir até sobre dados públicos usados para identificar pessoas naturais. Use apenas para finalidades legítimas, com minimização e respeito ao contexto de publicação. Não exponha uma API irrestrita de busca reversa. O arquivo .gitignore reduz o risco de envio acidental de dados, mas não substitui uma revisão antes do commit.
