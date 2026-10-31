@@ -1,0 +1,31 @@
+name: PhoneOSINT - WhatsApp perfil (testes)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'whatsapp_profile.py'
+      - 'tests/test_whatsapp_profile.py'
+      - '.github/workflows/whatsapp-perfil.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Testar parser e assinatura de webhook
+        run: python -m unittest discover -s tests -p 'test_whatsapp_profile.py' -v
+      - name: Confirmar exemplo ficticio sem publicar dados
+        shell: bash
+        run: |
+          python whatsapp_profile.py --demo > /dev/null
+          echo "Parser de perfil validado com dados ficticios."
