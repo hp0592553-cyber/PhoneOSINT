@@ -4,6 +4,14 @@ Esta integração lida com o **nome de perfil informado no webhook de uma mensag
 
 Ela **não** permite digitar um telefone qualquer e revelar o nome do usuário do WhatsApp. Não há integração oficial pública para esse tipo de consulta irrestrita. O campo de nome é escolhido pelo próprio usuário, pode mudar e **não comprova titularidade cadastral**.
 
+## Consulta manual pelo GitHub Actions (sem enviar mensagem)
+
+Em **Actions > PhoneOSINT - Consultar numero WhatsApp > Run workflow**, o GitHub mostra um campo de texto **Seu telefone brasileiro com DDD**. Digite o seu número e execute. Na aba **Summary** da execução, você verá se o número é válido, o tipo de linha e a região.
+
+**Limitação:** apenas informar o telefone não permite obter o nome de perfil pelo WhatsApp oficial. O resumo informa "Nome do perfil do WhatsApp: não disponível por consulta de número". Nenhuma mensagem é enviada.
+
+**Privacidade:** campos de `workflow_dispatch` não são segredos. Mesmo com repositório privado, pessoas autorizadas a acessar as execuções podem ter acesso ao valor do input ou aos metadados do evento; o programa não imprime o número, mas **não considere o campo confidencial**. Evite inserir dados de terceiros sem autorização.
+
 ## Teste imediato, sem conta Meta
 
 No Codespaces, execute:
