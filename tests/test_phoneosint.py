@@ -16,7 +16,7 @@ class PhoneOSINTTests(unittest.TestCase):
     def test_valid_number_has_no_private_identity(self):
         result = analyze(self.example)
         self.assertEqual(result["number"], self.example)
-        self.assertEqual(result["status"], "Titular nao identificado")
+        self.assertEqual(result["status"], "Titular não identificado")
         self.assertIsNone(result["company_name"])
 
     def test_invalid_number(self):
@@ -34,7 +34,7 @@ class PhoneOSINTTests(unittest.TestCase):
                 "checked_on": date.today().isoformat()}
         result = analyze(self.example, [item])
         self.assertEqual(result["company_name"], "EMPRESA FICTICIA")
-        self.assertIn("nao verificado automaticamente", result["status"])
+        self.assertIn("não verificado automaticamente", result["status"])
 
     def test_personal_evidence_not_used(self):
         item = {"number": self.example, "name": "Pessoa X",
