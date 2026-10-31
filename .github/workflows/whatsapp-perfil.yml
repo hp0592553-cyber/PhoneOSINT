@@ -1,41 +1,53 @@
-name: PhoneOSINT - Nome por numero
+name: PhoneOSINT - Nome por numero (teste)
 
-# Unico workflow de teste de nomes associados. Nenhuma busca privada.
-# Inputs do Run workflow NAO sao secretos.
-run-name: Nome associado ao telefone - teste autorizado
-
+# Um unico workflow na main. Simulacao nao acessa vazamentos reais.
+# Inputs workflow_dispatch NAO sao secretos.
 on:
   workflow_dispatch:
     inputs:
-      numero:
-        description: 'Numero com DDD (input nao secreto; prefira secret PHONE_NUMBER)'
-        required: false
-        type: string
-      confirmo_numero_meu:
-        description: 'Confirmo que o numero e meu ou tenho autorizacao para consulta'
+      modo:
+        description: 'Modo do teste'
+        type: choice
         required: true
+        default: 'simulacao'
+        options:
+          - simulacao
+          - meu_numero
+      numero:
+        description: 'No modo meu_numero: telefone com DDD (input nao secreto)'
+        type: string
+        required: false
+      confirmo_numero_meu:
+        description: 'Confirmo autorizacao para testar o telefone informado'
         type: boolean
+        required: false
         default: false
 
 permissions:
   contents: read
 
 jobs:
-  nome-por-numero:
+  teste:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Baixar projeto
+      - name: Checkout
         uses: actions/checkout@v4
-      - name: Configurar Python
+      - name: Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Instalar dependencias
+      - name: Dependencias
         run: python -m pip install -r requirements.txt
-      - name: Testar validacao e registro de nomes
+      - name: Testes
         run: python -m unittest discover -s tests -v
-      - name: Verificar nome associado por fontes permitidas
+      - name: Simular cruzamento de registros ficticios
+        if: ${{ inputs.modo == 'simulacao' }}
+        run: |
+          python demo_crosscheck.py >> "$GITHUB_STEP_SUMMARY"
+          echo "Simulacao concluida sem dados pessoais reais."
+      - name: Validar numero proprio sem acessar bases privadas
+        if: ${{ inputs.modo == 'meu_numero' }}
         env:
           PHONE_INPUT: ${{ inputs.numero }}
           PHONE_SECRET: ${{ secrets.PHONE_NUMBER }}
