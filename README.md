@@ -1,5 +1,7 @@
 # PhoneOSINT 🇧🇷
 
+**WhatsApp (nome de perfil em mensagens recebidas):** [guia de configuração e limitações](WHATSAPP.md). Esta integração não busca usuários pelo número.
+
 📚 [Fontes oficiais, limites legais e MP 1.396/2026](FONTES_E_LEGALIDADE.md)
 
 
