@@ -3,7 +3,7 @@
 ## Projeto focado em nome associado (branch Codex)
 
 **Branch de trabalho:** `codex/issue-1-associated-names`  
-**Único workflow:** [PhoneOSINT — Nome por número](.github/workflows/whatsapp-perfil.yml)
+**Único workflow:** [PhoneOSINT — Consulta de número real](.github/workflows/whatsapp-perfil.yml)
 
 Para executar: **Actions > PhoneOSINT - Nome por numero > Run workflow > Use workflow from: codex/issue-1-associated-names**. Digite somente seu próprio número ou use o segredo `PHONE_NUMBER`, confirme a autorização e abra a aba **Summary**.
 
@@ -26,7 +26,7 @@ Projeto Python de investigação **legal e local** de números brasileiros. Busc
 
 ## Testar seu próprio número sem chave (issue #1)
 
-Em **Actions > PhoneOSINT - Consulta sem chave > Run workflow**, confirme a autorização.
+Em **Actions > PhoneOSINT - Consulta de numero real > Run workflow**, confirme a autorização.
 Use preferencialmente **Settings > Secrets and variables > Actions > New repository secret**,
 com nome `PHONE_NUMBER`, e deixe `numero` vazio. O secret tem prioridade se ambos existirem.
 Alternativamente digite seu número brasileiro com DDD em `numero`: **inputs de
@@ -99,6 +99,14 @@ termos compatíveis, consentimento, autenticação, limites e controle de acesso
 O importador CNPJ existente funciona offline com arquivos previamente obtidos;
 o webhook WhatsApp exige configuração Meta e só lê perfis de remetentes recebidos,
 sem pesquisa reversa de números arbitrários.
+
+### Atualização: nada de simulação no workflow
+
+Em 31/10/2026, o modo de simulação e os registros fictícios foram removidos do workflow principal. Ele aceita o **seu número real**, valida o formato e apresenta páginas de serviços reais para pesquisa manual:
+- [Truecaller (PT-BR)](https://www.truecaller.com/pt-br/reverse-phone-number-lookup): nome associado quando disponível; exige login e limita buscas na web.
+- [Sync.ME (PT-BR)](https://sync.me/pt-br/reverse-phone-lookup/): busca reversa, com resultados variáveis e possíveis recursos pagos.
+
+O GitHub Actions **não consulta automaticamente os bancos privados** desses serviços: não há API integrada e autorizada sem chave. Não atribua um nome real com base apenas na validação do telefone. Para testar dados próprios, prefira configurar `PHONE_NUMBER` como segredo em Settings > Secrets and variables > Actions, deixando o input `numero` vazio. Nenhum número real é transmitido a Truecaller ou Sync.ME pelo workflow.
 
 ## Funcionalidades
 
