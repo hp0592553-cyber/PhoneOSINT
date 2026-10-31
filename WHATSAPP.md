@@ -4,13 +4,22 @@ Esta integração lida com o **nome de perfil informado no webhook de uma mensag
 
 Ela **não** permite digitar um telefone qualquer e revelar o nome do usuário do WhatsApp. Não há integração oficial pública para esse tipo de consulta irrestrita. O campo de nome é escolhido pelo próprio usuário, pode mudar e **não comprova titularidade cadastral**.
 
-## Consulta manual pelo GitHub Actions (sem enviar mensagem)
+## Um unico workflow: pesquisar meu numero sem enviar mensagem
 
-Em **Actions > PhoneOSINT - Consultar numero WhatsApp > Run workflow**, o GitHub mostra um campo de texto **Seu telefone brasileiro com DDD**. Digite o seu número e execute. Na aba **Summary** da execução, você verá se o número é válido, o tipo de linha e a região.
+Acesse [Actions > PhoneOSINT - Consultar meu numero](https://github.com/hp0592553-cyber/PhoneOSINT/actions/workflows/whatsapp-perfil.yml) e clique em **Run workflow**.
 
-**Limitação:** apenas informar o telefone não permite obter o nome de perfil pelo WhatsApp oficial. O resumo informa "Nome do perfil do WhatsApp: não disponível por consulta de número". Nenhuma mensagem é enviada.
+- **numero**: informe seu numero com DDD. **Nao e campo secreto**: dados de entrada podem aparecer em metadados do GitHub Actions. Para maior privacidade, deixe em branco e configure o segredo `PHONE_NUMBER` em **Settings > Secrets and variables > Actions**.
+- **confirmo_numero_meu**: marque apenas se este for seu numero ou tiver autorizacao.
+- **pesquisar_web**: opcional. Quando marcado, envia o numero para a **API oficial do Brave Search** (servico de terceiros) a fim de buscar mencoes PUBLICAS. Pode existir custo de API. Exige segredo `BRAVE_SEARCH_API_KEY`, obtido em https://api.search.brave.com/.
 
-**Privacidade:** campos de `workflow_dispatch` não são segredos. Mesmo com repositório privado, pessoas autorizadas a acessar as execuções podem ter acesso ao valor do input ou aos metadados do evento; o programa não imprime o número, mas **não considere o campo confidencial**. Evite inserir dados de terceiros sem autorização.
+No resultado, abra a **aba Summary** da execucao. Ali sao exibidos validacao, tipo, regiao e, se a busca foi habilitada e a chave configurada, titulos e dominios de ate cinco paginas encontradas. Nao sao mostrados o numero completo ou trechos contendo seu numero. Os resultados NAO sao confirmacoes de identidade.
+
+**Sem chave da Brave:** o teste valida formato e regiao, mas nao faz busca externa. **Sem mensagem ao WhatsApp:** o nome do perfil nao pode ser obtido diretamente pela API oficial. A pesquisa web nao consulta o cadastro privado de usuarios do WhatsApp.
+
+A pesquisa Brave ocorre apenas se voce marcar a opcao; consulte os termos e custos do seu plano antes. A pesquisa pode retornar nada, paginas antigas ou mencoes a outra pessoa que tenha usado o numero no passado.
+
+Para descobrir o numero cadastrado na sua conta WhatsApp, abra **WhatsApp > Configuracoes > seu perfil** no proprio celular. A funcao oficial **Conta > Pedir dados da conta** tambem permite obter seu relatorio privado, sem mensagens:
+https://faq.whatsapp.com/526463418847093/?cms_platform=web&locale=pt_BR
 
 ## Teste imediato, sem conta Meta
 
