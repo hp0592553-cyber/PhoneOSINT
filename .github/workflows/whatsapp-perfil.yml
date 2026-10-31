@@ -42,38 +42,4 @@ jobs:
           AUTHORIZED: ${{ inputs.confirmo_numero_meu }}
         shell: bash
         run: |
-          python - <<'PY'
-          import html
-          import os
-          from phoneosint import normalize_number
-
-          if os.getenv("AUTHORIZED", "").lower() != "true":
-              raise SystemExit("Confirme autorizacao marcando a caixa.")
-          raw = os.environ.get("PHONE_INPUT") or os.environ.get("PHONE_SECRET")
-          if not raw:
-              raise SystemExit("Digite seu numero no campo ou configure o segredo PHONE_NUMBER.")
-          try:
-              details = normalize_number(raw)
-          except ValueError:
-              raise SystemExit("Numero brasileiro invalido. Confira DDD e digitos.")
-
-          lines = [
-              "## PhoneOSINT - Resultado",
-              "",
-              "- Numero: **formato valido** (numero completo omitido)",
-              "- Tipo de linha: " + html.escape(details["type"]),
-              "- Regiao: " + html.escape(details["region"]),
-              "- Nome de usuario do WhatsApp: **nao acessivel apenas pelo numero**",
-              "- Titular cadastral: **nao identificado**",
-              "",
-              "### Como confirmar seu proprio nome de WhatsApp",
-              "No aplicativo WhatsApp, abra **Configuracoes > seu perfil**.",
-              "O nome exibido ali e o nome do perfil, nao o titular legal do chip.",
-              "",
-              "Este teste nao consultou dados privados, nao enviou mensagens e nao usou API key.",
-          ]
-          report = "\n".join(lines) + "\n"
-          print(report)
-          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
-              f.write(report)
-          PY
+          python -c "from associated_names import workflow_main; workflow_main()"
