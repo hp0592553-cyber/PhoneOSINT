@@ -1,55 +1,43 @@
-name: PhoneOSINT - Nome por numero (teste)
+name: PhoneOSINT - Consulta de numero real
 
-# Um unico workflow na main. Simulacao nao acessa vazamentos reais.
-# Inputs workflow_dispatch NAO sao secretos.
+# Um unico workflow na main, sem simulacoes nem acessos a dados vazados.
+# workflow_dispatch inputs NAO sao secretos; prefira o segredo PHONE_NUMBER.
 on:
   workflow_dispatch:
     inputs:
-      modo:
-        description: 'Modo do teste'
-        type: choice
-        required: true
-        default: 'simulacao'
-        options:
-          - simulacao
-          - meu_numero
       numero:
-        description: 'No modo meu_numero: telefone com DDD (input nao secreto)'
+        description: 'Seu numero com DDD (campo NAO secreto; prefira segredo PHONE_NUMBER)'
         type: string
         required: false
       confirmo_numero_meu:
-        description: 'Confirmo autorizacao para testar o telefone informado'
+        description: 'Confirmo que sou o titular ou usuario autorizado do numero'
         type: boolean
-        required: false
+        required: true
         default: false
 
 permissions:
   contents: read
 
 jobs:
-  teste:
+  pesquisa-real:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout
+      - name: Baixar projeto
         uses: actions/checkout@v4
-      - name: Python
+      - name: Preparar Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Dependencias
+      - name: Instalar dependencias
         run: python -m pip install -r requirements.txt
-      - name: Testes
+      - name: Executar testes
         run: python -m unittest discover -s tests -v
-      - name: Simular cruzamento de registros ficticios
-        if: ${{ inputs.modo == 'simulacao' }}
-        run: |
-          python demo_crosscheck.py >> "$GITHUB_STEP_SUMMARY"
-          echo "Simulacao concluida sem dados pessoais reais."
-      - name: Validar numero proprio sem acessar bases privadas
-        if: ${{ inputs.modo == 'meu_numero' }}
+      - name: Consultar seu numero e mostrar fontes reais
         env:
           PHONE_INPUT: ${{ inputs.numero }}
           PHONE_SECRET: ${{ secrets.PHONE_NUMBER }}
           AUTHORIZED: ${{ inputs.confirmo_numero_meu }}
-        run: python -c "from associated_names import workflow_main; workflow_main()"
+        shell: bash
+        run: |
+          python -c "from associated_names import workflow_main; workflow_main()"
