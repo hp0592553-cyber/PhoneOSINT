@@ -8,8 +8,8 @@ from pathlib import Path
 from phoneosint import normalize_number
 
 SOURCES = {
-    "truecaller": "https://www.truecaller.com/",
-    "sync_me": "https://sync.me/",
+    "truecaller": "https://www.truecaller.com/reverse-phone-number-lookup",
+    "sync_me": "https://sync.me/pt-br/reverse-phone-lookup/",
 }
 STATUS = "nome associado, não verificado"
 
@@ -72,20 +72,20 @@ def associated_names(raw, records=()):
 def basic_report(raw):
     result = associated_names(raw)
     return "\n".join([
-        "## PhoneOSINT — consulta sem chave", "",
+        "## PhoneOSINT — Nome por número (consulta autorizada)", "",
         "- Número: formato brasileiro válido; número completo omitido.",
         "- Validação de formato não confirma linha ativa ou posse.",
-        "- Nome: nenhum nome pesquisado automaticamente.",
+        "- Nome associado: NÃO IDENTIFICADO por esta execução; nenhuma base de nomes foi consultada.",
         "- Titular cadastral: não identificado.", "",
-        "### Consulta manual do próprio número",
+        "### Onde pesquisar o nome associado ao número",
         *[f"- {source}: {url}" for source, url in SOURCES.items()],
-        "Abra o site, selecione Brasil (+55) e digite seu número na interface oficial.",
+        "Abra a página, selecione Brasil (+55) e digite seu número diretamente no site.",
         "Login, assinatura, disponibilidade e limites dependem do serviço; respeite seus termos.",
         "Não há link com número: URL de busca oficialmente documentada não foi verificada.",
         "Registre eventual resultado somente em arquivo local *.evidence.json, nunca nos inputs.",
         result["warning"], "",
         "Inputs workflow_dispatch não são secretos. Prefira secrets.PHONE_NUMBER e deixe numero vazio.",
-        "Este modo não envia seu número a fontes externas nem envia mensagens.", "",
+        "Este workflow valida número e indica ferramentas manuais; não acessa nomes de terceiros, WhatsApp ou cadastros privados.", "",
     ])
 
 
