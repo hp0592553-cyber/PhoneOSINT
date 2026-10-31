@@ -1,5 +1,8 @@
 # PhoneOSINT 🇧🇷
 
+📚 [Fontes oficiais, limites legais e MP 1.396/2026](FONTES_E_LEGALIDADE.md)
+
+
 Projeto Python de investigação **legal e local** de números brasileiros. Busca possíveis vínculos com **empresas** informados em bases oficiais, sem atribuir identidade a pessoas físicas.
 
 ## Funcionalidades
