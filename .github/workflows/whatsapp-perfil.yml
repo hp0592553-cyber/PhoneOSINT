@@ -21,10 +21,8 @@ permissions:
   contents: read
 
 jobs:
-  limpar-branch-antiga:
-    if: github.event_name == 'push'
+  nome-por-numero:
     runs-on: ubuntu-latest
- latest
     timeout-minutes: 5
     steps:
       - name: Baixar projeto
